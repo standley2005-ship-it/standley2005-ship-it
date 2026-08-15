@@ -3,9 +3,7 @@ on:
   push:
     branches: [quant-amd-backtest]
     paths:
-      - 'quant-amd-backtest/high_confidence_search.py'
-      - 'quant-amd-backtest/gap_confidence_search.py'
-      - 'quant-amd-backtest/opening_consensus_search.py'
+      - 'quant-amd-backtest/ensemble_eval.py'
       - '.github/workflows/quant-high-confidence-2026.yml'
   workflow_dispatch:
 jobs:
@@ -22,16 +20,16 @@ jobs:
       - name: Download 2019-2025 QQQ 5m extended history
         run: |
           curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_19_to_Dec_26_2025.csv' -o quant-amd-backtest/train.csv
-      - name: Download untouched 2026 QQQ 5m history
+      - name: Download early-2026 QQQ 5m history
         run: |
           curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_23_to_Mar_20a_2026.csv' -o quant-amd-backtest/holdout2026.csv
-      - name: Opening-consensus search
+      - name: Evaluate fixed ensemble
         run: |
           cd quant-amd-backtest
-          python opening_consensus_search.py train.csv holdout2026.csv | tee consensus.log
+          python ensemble_eval.py train.csv holdout2026.csv | tee ensemble.log
       - uses: actions/upload-artifact@v4
         with:
-          name: consensus-2026-results
+          name: ensemble-2026-results
           path: |
-            quant-amd-backtest/consensus_results/
-            quant-amd-backtest/consensus.log
+            quant-amd-backtest/ensemble_results/
+            quant-amd-backtest/ensemble.log
