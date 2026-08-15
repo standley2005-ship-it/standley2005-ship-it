@@ -1,0 +1,37 @@
+name: Quant Second Wave
+on:
+  push:
+    branches: [quant-amd-backtest]
+    paths:
+      - 'quant-amd-backtest/second_wave_core.py'
+      - 'quant-amd-backtest/second_wave_family.py'
+      - '.github/workflows/quant-second-wave.yml'
+  workflow_dispatch:
+jobs:
+  family:
+    strategy:
+      matrix:
+        family: [premarket_retest, gap_pullback, vwap_reversion, orb_failed_break]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quant-amd-backtest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r quant-amd-backtest/requirements.txt
+      - run: curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_19_to_Dec_26_2025.csv' -o quant-amd-backtest/train.csv
+      - run: curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_23_to_Mar_20a_2026.csv' -o quant-amd-backtest/holdout2026.csv
+      - name: Search ${{ matrix.family }}
+        run: |
+          cd quant-amd-backtest
+          python second_wave_family.py '${{ matrix.family }}' train.csv holdout2026.csv | tee '${{ matrix.family }}_second.log'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: second-${{ matrix.family }}
+          path: |
+            quant-amd-backtest/second_results/${{ matrix.family }}.json
+            quant-amd-backtest/second_results/${{ matrix.family }}_2026.csv
+            quant-amd-backtest/${{ matrix.family }}_second.log
+          if-no-files-found: ignore
