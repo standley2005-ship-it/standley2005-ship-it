@@ -1,0 +1,41 @@
+name: Quant AMD Backtest
+
+on:
+  push:
+    branches: [quant-amd-backtest]
+    paths:
+      - 'quant-amd-backtest/**'
+      - '.github/workflows/quant-amd-backtest.yml'
+  workflow_dispatch:
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quant-amd-backtest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r quant-amd-backtest/requirements.txt
+      - name: Download QQQ 5-minute history
+        run: |
+          curl -L --fail --retry 3 \
+            'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_regular_raw_01_01_2018_to_24_10_2024_updated_28_10_2024.csv' \
+            -o quant-amd-backtest/qqq5m.csv
+          ls -lh quant-amd-backtest/qqq5m.csv
+      - name: Optimize objective AMD and run untouched 2024 test
+        run: |
+          cd quant-amd-backtest
+          python amd_optimize.py qqq5m.csv | tee run.log
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quant-amd-results
+          path: |
+            quant-amd-backtest/results/
+            quant-amd-backtest/run.log
