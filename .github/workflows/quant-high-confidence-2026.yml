@@ -3,7 +3,7 @@ on:
   push:
     branches: [quant-amd-backtest]
     paths:
-      - 'quant-amd-backtest/ensemble_eval.py'
+      - 'quant-amd-backtest/extension_eval.py'
       - '.github/workflows/quant-high-confidence-2026.yml'
   workflow_dispatch:
 jobs:
@@ -17,19 +17,14 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -r quant-amd-backtest/requirements.txt
-      - name: Download 2019-2025 QQQ 5m extended history
+      - name: Download QQQ one-minute data through Mar 26 2026
         run: |
-          curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_19_to_Dec_26_2025.csv' -o quant-amd-backtest/train.csv
-      - name: Download early-2026 QQQ 5m history
-        run: |
-          curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_23_to_Mar_20a_2026.csv' -o quant-amd-backtest/holdout2026.csv
-      - name: Evaluate fixed ensemble
+          curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ1m_Ext_J_26_to_Mar_26B_2026.csv' -o quant-amd-backtest/qqq1m_2026.csv
+      - name: Test frozen ensemble on Mar 23-26 extension
         run: |
           cd quant-amd-backtest
-          python ensemble_eval.py train.csv holdout2026.csv | tee ensemble.log
+          python extension_eval.py qqq1m_2026.csv | tee extension.log
       - uses: actions/upload-artifact@v4
         with:
-          name: ensemble-2026-results
-          path: |
-            quant-amd-backtest/ensemble_results/
-            quant-amd-backtest/ensemble.log
+          name: ensemble-extension-results
+          path: quant-amd-backtest/extension.log
