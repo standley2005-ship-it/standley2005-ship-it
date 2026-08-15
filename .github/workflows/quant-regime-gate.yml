@@ -1,0 +1,33 @@
+name: Quant Regime Gate
+on:
+  push:
+    branches: [quant-amd-backtest]
+    paths:
+      - 'quant-amd-backtest/regime_gate_search.py'
+      - '.github/workflows/quant-regime-gate.yml'
+  workflow_dispatch:
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quant-amd-backtest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r quant-amd-backtest/requirements.txt yfinance
+      - run: curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_19_to_Dec_26_2025.csv' -o quant-amd-backtest/train.csv
+      - run: curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_23_to_Mar_20a_2026.csv' -o quant-amd-backtest/early2026.csv
+      - name: Search and test pre-open regime gate
+        run: |
+          cd quant-amd-backtest
+          python regime_gate_search.py train.csv early2026.csv | tee regime_gate.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: regime-gate-results
+          path: |
+            quant-amd-backtest/regime_gate_results/
+            quant-amd-backtest/regime_gate.log
+            quant-amd-backtest/regime_recent_qqq.csv
