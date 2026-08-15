@@ -1,0 +1,30 @@
+name: Quant Regime Seven Symbol
+on:
+  push:
+    branches: [quant-amd-backtest]
+    paths:
+      - 'quant-amd-backtest/regime_gate_seven_symbol.py'
+      - '.github/workflows/quant-regime-seven.yml'
+  workflow_dispatch:
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quant-amd-backtest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r quant-amd-backtest/requirements.txt yfinance
+      - name: Test frozen gate across seven symbols
+        run: |
+          cd quant-amd-backtest
+          python regime_gate_seven_symbol.py | tee regime_gate_seven.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: regime-gate-seven-results
+          path: |
+            quant-amd-backtest/regime_gate_seven_results/
+            quant-amd-backtest/regime_gate_seven.log
