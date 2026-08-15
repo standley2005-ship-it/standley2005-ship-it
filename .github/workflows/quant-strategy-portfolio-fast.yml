@@ -1,0 +1,68 @@
+name: Quant Strategy Portfolio Fast
+on:
+  push:
+    branches: [quant-amd-backtest]
+    paths:
+      - 'quant-amd-backtest/family_fast.py'
+      - 'quant-amd-backtest/aggregate_fast.py'
+      - '.github/workflows/quant-strategy-portfolio-fast.yml'
+  workflow_dispatch:
+jobs:
+  family:
+    strategy:
+      matrix:
+        family: [orb_retest, gap_reversal, trend_pullback]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quant-amd-backtest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r quant-amd-backtest/requirements.txt
+      - run: curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_19_to_Dec_26_2025.csv' -o quant-amd-backtest/train.csv
+      - run: curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_23_to_Mar_20a_2026.csv' -o quant-amd-backtest/holdout2026.csv
+      - name: Search ${{ matrix.family }}
+        run: |
+          cd quant-amd-backtest
+          python family_fast.py '${{ matrix.family }}' train.csv holdout2026.csv | tee '${{ matrix.family }}.log'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: family-${{ matrix.family }}
+          path: |
+            quant-amd-backtest/fast_results/${{ matrix.family }}.json
+            quant-amd-backtest/fast_results/${{ matrix.family }}_2026.csv
+            quant-amd-backtest/${{ matrix.family }}.log
+          if-no-files-found: ignore
+  aggregate:
+    needs: family
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quant-amd-backtest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r quant-amd-backtest/requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: family-*
+          path: quant-amd-backtest/fast_inputs_raw
+      - name: Gather family JSON
+        run: |
+          mkdir -p quant-amd-backtest/fast_inputs
+          find quant-amd-backtest/fast_inputs_raw -name '*.json' -exec cp {} quant-amd-backtest/fast_inputs/ \;
+      - run: curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_19_to_Dec_26_2025.csv' -o quant-amd-backtest/train.csv
+      - run: curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_23_to_Mar_20a_2026.csv' -o quant-amd-backtest/holdout2026.csv
+      - name: Aggregate portfolio
+        run: |
+          cd quant-amd-backtest
+          python aggregate_fast.py train.csv holdout2026.csv | tee aggregate.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: strategy-portfolio-fast-results
+          path: |
+            quant-amd-backtest/aggregate_results/
+            quant-amd-backtest/aggregate.log
