@@ -1,0 +1,33 @@
+name: Quant AMD Robust Candidates
+on:
+  push:
+    branches: [quant-amd-backtest]
+    paths:
+      - 'quant-amd-backtest/amd_robust_candidates.py'
+      - '.github/workflows/quant-amd-robust.yml'
+  workflow_dispatch:
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quant-amd-backtest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r quant-amd-backtest/requirements.txt
+      - run: |
+          curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_19_to_Dec_26_2025.csv' -o quant-amd-backtest/qqq5m_ext.csv
+      - name: Compare robust candidates
+        run: |
+          cd quant-amd-backtest
+          mkdir -p premarket_results
+          python amd_robust_candidates.py qqq5m_ext.csv | tee robust.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quant-amd-robust-results
+          path: |
+            quant-amd-backtest/premarket_results/
+            quant-amd-backtest/robust.log
