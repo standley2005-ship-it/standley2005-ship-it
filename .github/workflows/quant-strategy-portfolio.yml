@@ -1,0 +1,35 @@
+name: Quant Strategy Portfolio
+on:
+  push:
+    branches: [quant-amd-backtest]
+    paths:
+      - 'quant-amd-backtest/portfolio_strategy_search.py'
+      - '.github/workflows/quant-strategy-portfolio.yml'
+  workflow_dispatch:
+jobs:
+  backtest:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quant-amd-backtest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r quant-amd-backtest/requirements.txt
+      - name: Download 2019-2025 QQQ 5m extended history
+        run: |
+          curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_19_to_Dec_26_2025.csv' -o quant-amd-backtest/train.csv
+      - name: Download early-2026 QQQ 5m history
+        run: |
+          curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_23_to_Mar_20a_2026.csv' -o quant-amd-backtest/holdout2026.csv
+      - name: Search and evaluate independent strategies
+        run: |
+          cd quant-amd-backtest
+          python portfolio_strategy_search.py train.csv holdout2026.csv | tee portfolio.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: strategy-portfolio-results
+          path: |
+            quant-amd-backtest/portfolio_results/
+            quant-amd-backtest/portfolio.log
