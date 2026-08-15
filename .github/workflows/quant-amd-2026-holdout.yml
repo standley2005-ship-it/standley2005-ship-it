@@ -1,0 +1,30 @@
+name: Quant AMD 2026 Holdout
+on:
+  push:
+    branches: [quant-amd-backtest]
+    paths:
+      - 'quant-amd-backtest/amd_2026_holdout.py'
+      - '.github/workflows/quant-amd-2026-holdout.yml'
+  workflow_dispatch:
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quant-amd-backtest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r quant-amd-backtest/requirements.txt
+      - run: |
+          curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_23_to_Mar_20a_2026.csv' -o quant-amd-backtest/qqq2026.csv
+      - name: Frozen 2026 holdout
+        run: |
+          cd quant-amd-backtest
+          python amd_2026_holdout.py qqq2026.csv | tee holdout2026.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quant-amd-2026-holdout
+          path: quant-amd-backtest/holdout2026.log
