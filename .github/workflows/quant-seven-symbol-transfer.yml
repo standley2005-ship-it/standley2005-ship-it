@@ -1,0 +1,30 @@
+name: Quant Seven Symbol Transfer
+on:
+  push:
+    branches: [quant-amd-backtest]
+    paths:
+      - 'quant-amd-backtest/cross_symbol_recent.py'
+      - '.github/workflows/quant-seven-symbol-transfer.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quant-amd-backtest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r quant-amd-backtest/requirements.txt yfinance
+      - name: Run frozen transfer test
+        run: |
+          cd quant-amd-backtest
+          python cross_symbol_recent.py | tee cross_symbol_recent.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seven-symbol-transfer-results
+          path: |
+            quant-amd-backtest/cross_symbol_results/
+            quant-amd-backtest/cross_symbol_recent.log
