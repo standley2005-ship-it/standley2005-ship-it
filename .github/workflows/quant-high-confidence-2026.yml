@@ -4,6 +4,7 @@ on:
     branches: [quant-amd-backtest]
     paths:
       - 'quant-amd-backtest/high_confidence_search.py'
+      - 'quant-amd-backtest/gap_confidence_search.py'
       - '.github/workflows/quant-high-confidence-2026.yml'
   workflow_dispatch:
 jobs:
@@ -23,13 +24,13 @@ jobs:
       - name: Download untouched 2026 QQQ 5m history
         run: |
           curl -L --fail --retry 3 'https://raw.githubusercontent.com/lvrusu/QQQ_price_data/main/QQQ5m_Ext_J_23_to_Mar_20a_2026.csv' -o quant-amd-backtest/holdout2026.csv
-      - name: Search strategy families and open 2026 holdout
+      - name: Focused high-confidence gap search
         run: |
           cd quant-amd-backtest
-          python high_confidence_search.py train.csv holdout2026.csv | tee confidence.log
+          python gap_confidence_search.py train.csv holdout2026.csv | tee gap_confidence.log
       - uses: actions/upload-artifact@v4
         with:
-          name: high-confidence-2026-results
+          name: gap-confidence-2026-results
           path: |
-            quant-amd-backtest/confidence_results/
-            quant-amd-backtest/confidence.log
+            quant-amd-backtest/gap_confidence_results/
+            quant-amd-backtest/gap_confidence.log
