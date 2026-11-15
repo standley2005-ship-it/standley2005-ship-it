@@ -8,7 +8,7 @@ extern GetModuleHandleA, LoadCursorA, RegisterClassExA
 extern CreateWindowExA, ShowWindow, UpdateWindow
 extern GetMessageA, TranslateMessage, DispatchMessageA
 extern DefWindowProcA, PostQuitMessage, DestroyWindow
-extern GetWindowTextA, SetWindowTextA, GetDlgItem
+extern GetWindowTextA, SetWindowTextA, GetDlgItem, GetDlgItemTextA
 extern parse_int32, format_int64, format_fixed4
 extern calc_add, calc_subtract, calc_multiply, calc_divide
 
@@ -310,11 +310,9 @@ perform_calculation:
 
     mov rcx, [h_main]
     mov edx, 301
-    call GetDlgItem
-    mov rcx, rax
-    lea rdx, [buffer1]
-    mov r8d, 64
-    call GetWindowTextA
+    lea r8, [buffer1]
+    mov r9d, 64
+    call GetDlgItemTextA
     ; TEMPORARY DIAGNOSTIC: echo retrieved text into result field
     mov rcx, [h_result]
     lea rdx, [buffer1]
@@ -327,11 +325,9 @@ perform_calculation:
 
     mov rcx, [h_main]
     mov edx, 302
-    call GetDlgItem
-    mov rcx, rax
-    lea rdx, [buffer2]
-    mov r8d, 64
-    call GetWindowTextA
+    lea r8, [buffer2]
+    mov r9d, 64
+    call GetDlgItemTextA
     lea rcx, [buffer2]
     call parse_int32
     test edx, edx
