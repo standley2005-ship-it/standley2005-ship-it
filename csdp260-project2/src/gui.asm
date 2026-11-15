@@ -8,7 +8,7 @@ extern GetModuleHandleA, LoadCursorA, RegisterClassExA
 extern CreateWindowExA, ShowWindow, UpdateWindow
 extern GetMessageA, TranslateMessage, DispatchMessageA
 extern DefWindowProcA, PostQuitMessage, DestroyWindow
-extern GetWindowTextA, SetWindowTextA
+extern GetWindowTextA, SetWindowTextA, GetDlgItem
 extern parse_int32, format_int64, format_fixed4
 extern calc_add, calc_subtract, calc_multiply, calc_divide
 
@@ -308,7 +308,10 @@ perform_calculation:
     sub rsp, 32
     mov ebx, ecx
 
-    mov rcx, [h_input1]
+    mov rcx, [h_main]
+    mov edx, 301
+    call GetDlgItem
+    mov rcx, rax
     lea rdx, [buffer1]
     mov r8d, 64
     call GetWindowTextA
@@ -318,7 +321,10 @@ perform_calculation:
     jnz .parse_error
     mov [operand1], rax
 
-    mov rcx, [h_input2]
+    mov rcx, [h_main]
+    mov edx, 302
+    call GetDlgItem
+    mov rcx, rax
     lea rdx, [buffer2]
     mov r8d, 64
     call GetWindowTextA
