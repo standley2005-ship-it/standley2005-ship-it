@@ -116,6 +116,7 @@ section .bss
     h_result resq 1
     h_status resq 1
     dummy_handle resq 1
+    caller_hwnd resq 1
     parse_ok resd 1
     buffer1 resb 64
     buffer2 resb 64
@@ -284,6 +285,7 @@ window_proc:
     jmp .handled
 .calculate:
     mov ecx, eax
+    mov rdx, rbx                 ; direct parent HWND from WndProc
     call perform_calculation
     jmp .handled
 .clear:
@@ -308,9 +310,10 @@ perform_calculation:
     push rbx
     sub rsp, 32
     mov ebx, ecx
+    mov [caller_hwnd], rdx
 
     ; Read signed integers through Win32; arithmetic remains NASM.
-    mov rcx, [h_main]
+    mov rcx, [caller_hwnd]
     mov edx, 301
     lea r8, [parse_ok]
     mov r9d, 1
@@ -320,7 +323,7 @@ perform_calculation:
     movsxd rax, eax
     mov [operand1], rax
 
-    mov rcx, [h_main]
+    mov rcx, [caller_hwnd]
     mov edx, 302
     lea r8, [parse_ok]
     mov r9d, 1
