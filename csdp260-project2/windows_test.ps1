@@ -69,12 +69,18 @@ try {
  $results=@()
  Snapshot "00-start"
  foreach($case in $tests){
-  [void][NativeWin]::SetWindowText($one,$case.first)
-  [void][NativeWin]::SetWindowText($two,$case.second)
+  $was1=[NativeWin]::SetWindowText($one,$case.first)
+  $was2=[NativeWin]::SetWindowText($two,$case.second)
+  $inputText1=New-Object System.Text.StringBuilder 500
+  $inputText2=New-Object System.Text.StringBuilder 500
+  [void][NativeWin]::GetWindowText($one,$inputText1,$inputText1.Capacity)
+  [void][NativeWin]::GetWindowText($two,$inputText2,$inputText2.Capacity)
+  Write-Host "TEST $($case.id) SET1=$was1 SET2=$was2 INPUT1=($($inputText1.ToString())) INPUT2=($($inputText2.ToString()))"
   [void][NativeWin]::SendMessage($w,273,[IntPtr]$case.button,[IntPtr]::Zero)
   Start-Sleep -Milliseconds 450
   Snapshot $case.id
   $text=ResultAndStatus
+  Write-Host "OBSERVED=$text EXPECTED=$($case.expected)"
   $match=$text.Contains($case.expected)
   $results += [PSCustomObject]@{Case=$case.id;Input1=$case.first;Input2=$case.second;Expected=$case.expected;Observed=$text;Pass=$match}
  }
