@@ -315,6 +315,10 @@ perform_calculation:
     lea rdx, [buffer1]
     mov r8d, 64
     call GetWindowTextA
+    ; TEMPORARY DIAGNOSTIC: echo retrieved text into result field
+    mov rcx, [h_result]
+    lea rdx, [buffer1]
+    call SetWindowTextA
     lea rcx, [buffer1]
     call parse_int32
     test edx, edx
@@ -401,9 +405,7 @@ show_error:
     push rbx
     sub rsp, 32
     mov rbx, rcx
-    mov rcx, [h_result]
-    lea rdx, [txt_empty]
-    call SetWindowTextA
+    ; diagnostic: keep input echo in result area
     mov rcx, [h_status]
     mov rdx, rbx
     call SetWindowTextA
