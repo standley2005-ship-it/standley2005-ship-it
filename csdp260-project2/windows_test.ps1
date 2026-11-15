@@ -16,6 +16,8 @@ public static class NativeWin {
  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h,out RECT rect);
  [DllImport("user32.dll",CharSet=CharSet.Ansi)] public static extern int GetWindowText(IntPtr h,StringBuilder t,int max);
  [DllImport("user32.dll",CharSet=CharSet.Ansi)] public static extern IntPtr FindWindowEx(IntPtr parent,IntPtr after,string name,string title);
+ [DllImport("user32.dll")] public static extern IntPtr GetWindow(IntPtr h,uint cmd);
+ [DllImport("user32.dll",CharSet=CharSet.Ansi)] public static extern int GetClassName(IntPtr h,StringBuilder b,int max);
  [StructLayout(LayoutKind.Sequential)] public struct RECT {public int L,T,R,B;}
 }
 '@
@@ -48,13 +50,14 @@ try {
  }
  function ResultAndStatus{
   $strings=@()
-  $cur=[IntPtr]::Zero
-  while($true){
-    $cur=[NativeWin]::FindWindowEx($w,$cur,"STATIC",$null)
-    if($cur -eq [IntPtr]::Zero){break}
+  $cur=[NativeWin]::GetWindow($w,5)
+  while($cur -ne [IntPtr]::Zero){
     $buf=New-Object System.Text.StringBuilder 1000
+    $cl=New-Object System.Text.StringBuilder 128
     [void][NativeWin]::GetWindowText($cur,$buf,$buf.Capacity)
-    $strings+= $buf.ToString()
+    [void][NativeWin]::GetClassName($cur,$cl,$cl.Capacity)
+    $strings+= "$($cl.ToString()):$($buf.ToString())"
+    $cur=[NativeWin]::GetWindow($cur,2)
   }
   return ($strings -join " | ")
  }
@@ -76,8 +79,14 @@ try {
   [void][NativeWin]::GetWindowText($one,$inputText1,$inputText1.Capacity)
   [void][NativeWin]::GetWindowText($two,$inputText2,$inputText2.Capacity)
   Write-Host "TEST $($case.id) SET1=$was1 SET2=$was2 INPUT1=($($inputText1.ToString())) INPUT2=($($inputText2.ToString()))"
+  Snapshot "$($case.id)-before"
   [void][NativeWin]::SendMessage($w,273,[IntPtr]$case.button,[IntPtr]::Zero)
   Start-Sleep -Milliseconds 450
+  $after1=New-Object System.Text.StringBuilder 500
+  $after2=New-Object System.Text.StringBuilder 500
+  [void][NativeWin]::GetWindowText($one,$after1,$after1.Capacity)
+  [void][NativeWin]::GetWindowText($two,$after2,$after2.Capacity)
+  Write-Host "AFTER INPUT1=($($after1.ToString())) INPUT2=($($after2.ToString()))"
   Snapshot $case.id
   $text=ResultAndStatus
   Write-Host "OBSERVED=$text EXPECTED=$($case.expected)"
