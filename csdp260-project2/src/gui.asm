@@ -8,7 +8,7 @@ extern GetModuleHandleA, LoadCursorA, RegisterClassExA
 extern CreateWindowExA, ShowWindow, UpdateWindow
 extern GetMessageA, TranslateMessage, DispatchMessageA
 extern DefWindowProcA, PostQuitMessage, DestroyWindow
-extern GetWindowTextA, SetWindowTextA, GetDlgItem, GetDlgItemTextA
+extern GetWindowTextA, SetWindowTextA, GetDlgItem, GetDlgItemTextA, GetDlgItemInt
 extern parse_int32, format_int64, format_fixed4
 extern calc_add, calc_subtract, calc_multiply, calc_divide
 
@@ -116,6 +116,7 @@ section .bss
     h_result resq 1
     h_status resq 1
     dummy_handle resq 1
+    parse_ok resd 1
     buffer1 resb 64
     buffer2 resb 64
     operand1 resq 1
@@ -308,30 +309,25 @@ perform_calculation:
     sub rsp, 32
     mov ebx, ecx
 
+    ; Read signed integers through Win32; arithmetic remains NASM.
     mov rcx, [h_main]
     mov edx, 301
-    lea r8, [buffer1]
-    mov r9d, 64
-    call GetDlgItemTextA
-    ; TEMPORARY DIAGNOSTIC: echo retrieved text into result field
-    mov rcx, [h_result]
-    lea rdx, [buffer1]
-    call SetWindowTextA
-    lea rcx, [buffer1]
-    call parse_int32
-    test edx, edx
-    jnz .parse_error
+    lea r8, [parse_ok]
+    mov r9d, 1
+    call GetDlgItemInt
+    cmp dword [parse_ok], 0
+    je .parse_input_error
+    movsxd rax, eax
     mov [operand1], rax
 
     mov rcx, [h_main]
     mov edx, 302
-    lea r8, [buffer2]
-    mov r9d, 64
-    call GetDlgItemTextA
-    lea rcx, [buffer2]
-    call parse_int32
-    test edx, edx
-    jnz .parse_error
+    lea r8, [parse_ok]
+    mov r9d, 1
+    call GetDlgItemInt
+    cmp dword [parse_ok], 0
+    je .parse_input_error
+    movsxd rax, eax
     mov [operand2], rax
 
     mov rcx, [operand1]
@@ -369,6 +365,10 @@ perform_calculation:
     lea rdx, [txt_done]
     call SetWindowTextA
     jmp .finished
+.parse_input_error:
+    lea rcx, [err_invalid]
+    call show_error
+    jmp .finished
 .parse_error:
     mov ecx, edx
     call set_parse_error
@@ -401,7 +401,9 @@ show_error:
     push rbx
     sub rsp, 32
     mov rbx, rcx
-    ; diagnostic: keep input echo in result area
+    mov rcx, [h_result]
+    lea rdx, [txt_empty]
+    call SetWindowTextA
     mov rcx, [h_status]
     mov rdx, rbx
     call SetWindowTextA
