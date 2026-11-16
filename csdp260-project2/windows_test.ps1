@@ -58,7 +58,7 @@ try {
   while($cur -ne [IntPtr]::Zero){
     $buf=New-Object System.Text.StringBuilder 1000
     $cl=New-Object System.Text.StringBuilder 128
-    [void][NativeWin]::GetWindowText($cur,$buf,$buf.Capacity)
+    [void][NativeWin]::ReadText($cur,0x000D,[IntPtr]$buf.Capacity,$buf)
     [void][NativeWin]::GetClassName($cur,$cl,$cl.Capacity)
     $strings+= "$($cl.ToString()):$($buf.ToString())"
     $cur=[NativeWin]::GetWindow($cur,2)
@@ -94,8 +94,6 @@ try {
   $cleared=[NativeWin]::PostMessage($w,273,[IntPtr]105,[IntPtr]::Zero)
   if(-not $cleared){ throw "Could not clear previous inputs" }
   Start-Sleep -Milliseconds 200
-  $was1=$true
-  $was2=$true
   # Actual WM_CHAR editing, instead of remote SetWindowText.
   foreach($ch in $case.first.ToCharArray()) {
     [void][NativeWin]::PostMessage($one,0x0102,[IntPtr][int]$ch,[IntPtr]1)
@@ -106,14 +104,9 @@ try {
   Start-Sleep -Milliseconds 350
   $inputText1=New-Object System.Text.StringBuilder 500
   $inputText2=New-Object System.Text.StringBuilder 500
-  [void][NativeWin]::GetWindowText($one,$inputText1,$inputText1.Capacity)
-  [void][NativeWin]::GetWindowText($two,$inputText2,$inputText2.Capacity)
-  Write-Host "TEST $($case.id) SET1=$was1 SET2=$was2 INPUT1=($($inputText1.ToString())) INPUT2=($($inputText2.ToString()))"
-  $ok1=$false
-  $ok2=$false
-  $val1=[NativeWin]::GetDlgItemInt($w,301,[ref]$ok1,$true)
-  $val2=[NativeWin]::GetDlgItemInt($w,302,[ref]$ok2,$true)
-  Write-Host "API GetDlgItemInt: $val1 ok=$ok1; $val2 ok=$ok2"
+  [void][NativeWin]::ReadText($one,0x000D,[IntPtr]$inputText1.Capacity,$inputText1)
+  [void][NativeWin]::ReadText($two,0x000D,[IntPtr]$inputText2.Capacity,$inputText2)
+  Write-Host "TEST $($case.id) INPUT1=($($inputText1.ToString())) INPUT2=($($inputText2.ToString()))"
   Snapshot "$($case.id)-before"
   $button=[NativeWin]::GetDlgItem($w,$case.button)
   if($button -eq [IntPtr]::Zero){ throw "Operation button missing: $($case.button)" }
@@ -123,8 +116,8 @@ try {
   Start-Sleep -Milliseconds 450
   $after1=New-Object System.Text.StringBuilder 500
   $after2=New-Object System.Text.StringBuilder 500
-  [void][NativeWin]::GetWindowText($one,$after1,$after1.Capacity)
-  [void][NativeWin]::GetWindowText($two,$after2,$after2.Capacity)
+  [void][NativeWin]::ReadText($one,0x000D,[IntPtr]$after1.Capacity,$after1)
+  [void][NativeWin]::ReadText($two,0x000D,[IntPtr]$after2.Capacity,$after2)
   Write-Host "AFTER INPUT1=($($after1.ToString())) INPUT2=($($after2.ToString()))"
   Snapshot $case.id
   $text=ResultAndStatus
