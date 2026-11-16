@@ -8,7 +8,7 @@ extern GetModuleHandleA, LoadCursorA, RegisterClassExA
 extern CreateWindowExA, ShowWindow, UpdateWindow
 extern GetMessageA, TranslateMessage, DispatchMessageA
 extern DefWindowProcA, PostQuitMessage, DestroyWindow
-extern GetWindowTextA, SetWindowTextA, GetDlgItem, GetDlgItemTextA, GetDlgItemInt, GetParent
+extern GetWindowTextA, SetWindowTextA, GetDlgItem, GetDlgItemTextA, GetDlgItemInt, GetParent, GetLastError, SetLastError
 extern parse_int32, format_int64, format_fixed4
 extern calc_add, calc_subtract, calc_multiply, calc_divide
 
@@ -312,13 +312,18 @@ perform_calculation:
     mov ebx, ecx
     mov [caller_hwnd], rdx
 
-    ; Diagnostic: ask Win32 for edit1 text and echo it in the result label
+    ; Diagnostic: get Win32 error code after retrieving edit text
+    xor ecx, ecx
+    call SetLastError
     mov rcx, [h_input1]
     lea rdx, [buffer1]
     mov r8d, 64
     call GetWindowTextA
+    call GetLastError
+    mov rcx, rax
+    call format_int64
     mov rcx, [h_result]
-    lea rdx, [buffer1]
+    mov rdx, rax
     call SetWindowTextA
 
     ; Read signed integers through Win32; arithmetic remains NASM.
