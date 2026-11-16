@@ -75,8 +75,16 @@ try {
  $results=@()
  Snapshot "00-start"
  foreach($case in $tests){
-  $was1=[NativeWin]::SetWindowText($one,$case.first)
-  $was2=[NativeWin]::SetWindowText($two,$case.second)
+  # Simulate actual typing, instead of setting text from a foreign process.
+  $was1=[NativeWin]::SetWindowText($one,"")
+  $was2=[NativeWin]::SetWindowText($two,"")
+  foreach($ch in $case.first.ToCharArray()) {
+    [void][NativeWin]::PostMessage($one,0x0102,[IntPtr][int]$ch,[IntPtr]1)
+  }
+  foreach($ch in $case.second.ToCharArray()) {
+    [void][NativeWin]::PostMessage($two,0x0102,[IntPtr][int]$ch,[IntPtr]1)
+  }
+  Start-Sleep -Milliseconds 350
   $inputText1=New-Object System.Text.StringBuilder 500
   $inputText2=New-Object System.Text.StringBuilder 500
   [void][NativeWin]::GetWindowText($one,$inputText1,$inputText1.Capacity)
