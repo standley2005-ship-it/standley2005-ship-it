@@ -75,9 +75,13 @@ try {
  $results=@()
  Snapshot "00-start"
  foreach($case in $tests){
-  # Simulate actual typing, instead of setting text from a foreign process.
-  $was1=[NativeWin]::SetWindowText($one,"")
-  $was2=[NativeWin]::SetWindowText($two,"")
+  # Clear from the application's own GUI thread before each new test.
+  $cleared=[NativeWin]::PostMessage($w,273,[IntPtr]105,[IntPtr]::Zero)
+  if(-not $cleared){ throw "Could not clear previous inputs" }
+  Start-Sleep -Milliseconds 200
+  $was1=$true
+  $was2=$true
+  # Actual WM_CHAR editing, instead of remote SetWindowText.
   foreach($ch in $case.first.ToCharArray()) {
     [void][NativeWin]::PostMessage($one,0x0102,[IntPtr][int]$ch,[IntPtr]1)
   }
