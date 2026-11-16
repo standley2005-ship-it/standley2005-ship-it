@@ -318,10 +318,16 @@ perform_calculation:
     lea r8, [parse_ok]
     mov r9d, 1
     call GetDlgItemInt
-    cmp dword [parse_ok], 0
-    je .parse_input_error
+    ; Diagnostic: display first GetDlgItemInt return value in result
     movsxd rax, eax
     mov [operand1], rax
+    mov rcx, rax
+    call format_int64
+    mov rcx, [h_result]
+    mov rdx, rax
+    call SetWindowTextA
+    cmp dword [parse_ok], 0
+    je .parse_input_error
 
     mov rcx, [caller_hwnd]
     mov edx, 302
@@ -369,8 +375,10 @@ perform_calculation:
     call SetWindowTextA
     jmp .finished
 .parse_input_error:
-    lea rcx, [err_invalid]
-    call show_error
+    ; Diagnostic: keep result showing first parsed value
+    mov rcx, [h_status]
+    lea rdx, [err_invalid]
+    call SetWindowTextA
     jmp .finished
 .parse_error:
     mov ecx, edx
