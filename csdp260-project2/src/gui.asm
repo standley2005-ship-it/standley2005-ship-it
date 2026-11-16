@@ -8,7 +8,7 @@ extern GetModuleHandleA, LoadCursorA, RegisterClassExA
 extern CreateWindowExA, ShowWindow, UpdateWindow
 extern GetMessageA, TranslateMessage, DispatchMessageA
 extern DefWindowProcA, PostQuitMessage, DestroyWindow
-extern GetWindowTextA, SetWindowTextA, GetDlgItem, GetDlgItemTextA, GetDlgItemInt
+extern GetWindowTextA, SetWindowTextA, GetDlgItem, GetDlgItemTextA, GetDlgItemInt, GetParent
 extern parse_int32, format_int64, format_fixed4
 extern calc_add, calc_subtract, calc_multiply, calc_divide
 
@@ -313,7 +313,9 @@ perform_calculation:
     mov [caller_hwnd], rdx
 
     ; Read signed integers through Win32; arithmetic remains NASM.
-    mov rcx, [caller_hwnd]
+    mov rcx, [h_input1]
+    call GetParent
+    mov rcx, rax
     mov edx, 301
     lea r8, [parse_ok]
     mov r9d, 1
@@ -329,7 +331,9 @@ perform_calculation:
     cmp dword [parse_ok], 0
     je .parse_input_error
 
-    mov rcx, [caller_hwnd]
+    mov rcx, [h_input2]
+    call GetParent
+    mov rcx, rax
     mov edx, 302
     lea r8, [parse_ok]
     mov r9d, 1
