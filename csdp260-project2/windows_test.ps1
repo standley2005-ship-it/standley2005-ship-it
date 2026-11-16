@@ -64,6 +64,13 @@ try {
   }
   return ($strings -join " | ")
  }
+ function ControlText([int] $id){
+  $handle=[NativeWin]::GetDlgItem($w,$id)
+  if($handle -eq [IntPtr]::Zero){throw "Missing control $id"}
+  $buf=New-Object System.Text.StringBuilder 1000
+  [void][NativeWin]::GetWindowText($handle,$buf,$buf.Capacity)
+  return $buf.ToString()
+ }
  $tests=@(
    @{id="01-add"; first="10";second="5"; button=101;expected="15"},
    @{id="02-subtract";first="20";second="8";button=102;expected="12"},
@@ -121,15 +128,31 @@ try {
   Snapshot $case.id
   $text=ResultAndStatus
   Write-Host "OBSERVED=$text EXPECTED=$($case.expected)"
-  $match=$text.Contains($case.expected)
+  $expectedError=$case.id -in @('05-zero-divisor','06-invalid-input','11-empty','13-out-of-range')
+  $observedResult=ControlText 303
+  $observedStatus=ControlText 304
+  $inputsMatch=((ControlText 301) -ceq $case.first) -and ((ControlText 302) -ceq $case.second)
+  if($expectedError){
+    $match=($observedResult -ceq '') -and $observedStatus.StartsWith($case.expected)
+  } else {
+    $match=($observedResult -ceq $case.expected)
+  }
+  $match=$match -and $inputsMatch
   $results += [PSCustomObject]@{Case=$case.id;Input1=$case.first;Input2=$case.second;Expected=$case.expected;Observed=$text;Pass=$match}
  }
+ [void][NativeWin]::PostMessage($w,273,[IntPtr]105,[IntPtr]::Zero)
+ Start-Sleep -Milliseconds 250
+ Snapshot "14-clear"
+ $clearOK=((ControlText 301) -ceq '') -and ((ControlText 302) -ceq '') -and ((ControlText 303) -ceq '') -and ((ControlText 304) -ceq 'Ready. Enter two whole numbers.')
+ $results += [PSCustomObject]@{Case='14-clear';Input1='';Input2='';Expected='Empty inputs/result; Ready. Enter two whole numbers.';Observed=(ResultAndStatus);Pass=$clearOK}
+ [void][NativeWin]::PostMessage($w,273,[IntPtr]106,[IntPtr]::Zero)
+ $exitOK=$proc.WaitForExit(5000)
+ if($exitOK){$exitOK=$proc.ExitCode -eq 0}
+ $results += [PSCustomObject]@{Case='15-exit';Input1='';Input2='';Expected='Process exits with code 0';Observed="Exited=$exitOK";Pass=$exitOK}
  $results | Export-Csv -NoTypeInformation -Path (Join-Path $evidence "verified_test_results.csv")
  if(($results | Where-Object {-not $_.Pass}).Count -gt 0){throw "Calculator returned incorrect values in one or more GUI tests"}
- [void][NativeWin]::SendMessage($w,273,[IntPtr]105,[IntPtr]::Zero)
- Start-Sleep -Milliseconds 250
- Snapshot "07-clear"
- Write-Host "SUCCESS: GUI launched and tests passed"
+ Write-Host "SUCCESS: GUI launched and all 15 tests passed"
+
 } finally {
  if(-not $proc.HasExited){$proc.CloseMainWindow() | Out-Null;Start-Sleep -Milliseconds 500}
  if(-not $proc.HasExited){Stop-Process -Id $proc.Id -Force}

@@ -93,13 +93,13 @@ section .data
               dd 22, 169, 95, 24, WS_STATIC, 0
               dq dummy_handle
     c_result: dq cls_static, txt_empty
-              dd 126, 165, 440, 30, WS_BORDERED, 0
+              dd 126, 165, 440, 30, WS_BORDERED, 303
               dq h_result
     c_statuslabel: dq cls_static, label_status
               dd 22, 207, 130, 24, WS_STATIC, 0
               dq dummy_handle
     c_status: dq cls_static, txt_ready
-              dd 160, 204, 406, 30, WS_BORDERED, 0
+              dd 160, 204, 406, 30, WS_BORDERED, 304
               dq h_status
     c_clear:  dq cls_button, txt_clear
               dd 326, 251, 114, 34, WS_BUTTON, ID_CLEAR
