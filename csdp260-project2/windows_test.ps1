@@ -8,6 +8,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 public static class NativeWin {
+ [DllImport("user32.dll",EntryPoint="SendMessageA",CharSet=CharSet.Ansi)] public static extern IntPtr ReadText(IntPtr h,int m,IntPtr length,StringBuilder text);
  [DllImport("user32.dll",CharSet=CharSet.Ansi)] public static extern IntPtr FindWindow(string c,string n);
  [DllImport("user32.dll")] public static extern IntPtr GetDlgItem(IntPtr h,int id);
  [DllImport("user32.dll")] public static extern uint GetDlgItemInt(IntPtr h,int id,out bool ok,bool signed);
@@ -68,7 +69,7 @@ try {
   $handle=[NativeWin]::GetDlgItem($w,$id)
   if($handle -eq [IntPtr]::Zero){throw "Missing control $id"}
   $buf=New-Object System.Text.StringBuilder 1000
-  [void][NativeWin]::GetWindowText($handle,$buf,$buf.Capacity)
+  [void][NativeWin]::ReadText($handle,0x000D,[IntPtr]$buf.Capacity,$buf)
   return $buf.ToString()
  }
  $tests=@(
