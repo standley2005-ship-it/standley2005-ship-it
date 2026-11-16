@@ -35,6 +35,7 @@ try {
  $one=[NativeWin]::GetDlgItem($w,301)
  $two=[NativeWin]::GetDlgItem($w,302)
  if($one -eq [IntPtr]::Zero -or $two -eq [IntPtr]::Zero){throw "Input fields not found"}
+ Write-Host "EXTERNAL HANDLES: PARENT=$($w.ToInt64()) INPUT1=$($one.ToInt64()) INPUT2=$($two.ToInt64())"
  function Snapshot([string] $name){
   $rect=New-Object NativeWin+RECT
   [NativeWin]::GetWindowRect($w,[ref]$rect) | Out-Null
