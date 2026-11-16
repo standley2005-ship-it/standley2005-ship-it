@@ -70,7 +70,14 @@ try {
    @{id="03-multiply";first="6";second="4";button=103;expected="24"},
    @{id="04-divide";first="15";second="2";button=104;expected="7.5"},
    @{id="05-zero-divisor";first="10";second="0";button=104;expected="Cannot divide by zero."},
-   @{id="06-invalid-input";first="abc";second="3";button=101;expected="Invalid input."}
+   @{id="06-invalid-input";first="abc";second="3";button=101;expected="Invalid input."},
+   @{id="07-negative-subtract";first="10";second="25";button=102;expected="-15"},
+   @{id="08-negative-add";first="-10";second="5";button=101;expected="-5"},
+   @{id="09-fraction";first="1";second="3";button=104;expected="0.3333"},
+   @{id="10-negative-fraction";first="-1";second="2";button=104;expected="-0.5"},
+   @{id="11-empty";first="";second="4";button=101;expected="Please enter both numbers."},
+   @{id="12-zero-result";first="5";second="5";button=102;expected="0"},
+   @{id="13-out-of-range";first="2147483648";second="1";button=101;expected="Out of range:"}
  )
  $results=@()
  Snapshot "00-start"
