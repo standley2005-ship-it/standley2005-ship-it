@@ -1,0 +1,29 @@
+CSDP 260 Project 2 - Technical report and user manual
+Student: Standley Saint Leger Rock
+
+The executable uses NASM x64 assembly and the Windows API. main.asm enters
+the GUI; gui.asm creates controls and handles events. validation.asm parses
+signed int32 text and formats results. arithmetic.asm implements all four
+operations. C is only used by the independent test harness. The preserved
+win32_bridge.c is not part of the executable.
+
+Windows x64 calling convention: RCX and RDX pass operands; RAX returns the
+value. Division reports divide-by-zero in EDX and scales valid results by
+10000. Input bounds keep addition, subtraction, multiplication and scaled
+division within signed int64. Division rounds half away from zero.
+
+User manual: enter two integers, then click Add, Subtract, Multiply or Divide.
+Read Result and Status / error. Invalid characters, missing values, numbers
+outside int32, and zero divisors are rejected. Clear resets inputs/result;
+Exit closes the window. See the live-demo sheet for a guided demonstration.
+
+Build and verification: build.bat assembles four modules and links user32.lib
+and kernel32.lib, producing a Windows GUI executable without a console.
+GitHub Actions builds on Windows, runs direct NASM calls through a separate
+harness, then types WM_CHAR input into the running app, clearing each case.
+The automation observes exact result controls, error status, Clear and Exit.
+It captures real window images. See evidence CSVs for actual observations.
+
+This documentation was prepared from repository source. A user-supplied MP4
+is now included unchanged; see video/README.txt for checks and limits. No
+original student report or classroom demonstration is claimed. See MISSING_ITEMS.txt.

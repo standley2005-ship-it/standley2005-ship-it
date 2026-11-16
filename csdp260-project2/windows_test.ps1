@@ -8,6 +8,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 public static class NativeWin {
+ [DllImport("user32.dll",EntryPoint="SendMessageA",CharSet=CharSet.Ansi)] public static extern IntPtr ReadText(IntPtr h,int m,IntPtr length,StringBuilder text);
  [DllImport("user32.dll",CharSet=CharSet.Ansi)] public static extern IntPtr FindWindow(string c,string n);
  [DllImport("user32.dll")] public static extern IntPtr GetDlgItem(IntPtr h,int id);
  [DllImport("user32.dll")] public static extern uint GetDlgItemInt(IntPtr h,int id,out bool ok,bool signed);
@@ -57,12 +58,19 @@ try {
   while($cur -ne [IntPtr]::Zero){
     $buf=New-Object System.Text.StringBuilder 1000
     $cl=New-Object System.Text.StringBuilder 128
-    [void][NativeWin]::GetWindowText($cur,$buf,$buf.Capacity)
+    [void][NativeWin]::ReadText($cur,0x000D,[IntPtr]$buf.Capacity,$buf)
     [void][NativeWin]::GetClassName($cur,$cl,$cl.Capacity)
     $strings+= "$($cl.ToString()):$($buf.ToString())"
     $cur=[NativeWin]::GetWindow($cur,2)
   }
   return ($strings -join " | ")
+ }
+ function ControlText([int] $id){
+  $handle=[NativeWin]::GetDlgItem($w,$id)
+  if($handle -eq [IntPtr]::Zero){throw "Missing control $id"}
+  $buf=New-Object System.Text.StringBuilder 1000
+  [void][NativeWin]::ReadText($handle,0x000D,[IntPtr]$buf.Capacity,$buf)
+  return $buf.ToString()
  }
  $tests=@(
    @{id="01-add"; first="10";second="5"; button=101;expected="15"},
@@ -86,8 +94,6 @@ try {
   $cleared=[NativeWin]::PostMessage($w,273,[IntPtr]105,[IntPtr]::Zero)
   if(-not $cleared){ throw "Could not clear previous inputs" }
   Start-Sleep -Milliseconds 200
-  $was1=$true
-  $was2=$true
   # Actual WM_CHAR editing, instead of remote SetWindowText.
   foreach($ch in $case.first.ToCharArray()) {
     [void][NativeWin]::PostMessage($one,0x0102,[IntPtr][int]$ch,[IntPtr]1)
@@ -98,14 +104,9 @@ try {
   Start-Sleep -Milliseconds 350
   $inputText1=New-Object System.Text.StringBuilder 500
   $inputText2=New-Object System.Text.StringBuilder 500
-  [void][NativeWin]::GetWindowText($one,$inputText1,$inputText1.Capacity)
-  [void][NativeWin]::GetWindowText($two,$inputText2,$inputText2.Capacity)
-  Write-Host "TEST $($case.id) SET1=$was1 SET2=$was2 INPUT1=($($inputText1.ToString())) INPUT2=($($inputText2.ToString()))"
-  $ok1=$false
-  $ok2=$false
-  $val1=[NativeWin]::GetDlgItemInt($w,301,[ref]$ok1,$true)
-  $val2=[NativeWin]::GetDlgItemInt($w,302,[ref]$ok2,$true)
-  Write-Host "API GetDlgItemInt: $val1 ok=$ok1; $val2 ok=$ok2"
+  [void][NativeWin]::ReadText($one,0x000D,[IntPtr]$inputText1.Capacity,$inputText1)
+  [void][NativeWin]::ReadText($two,0x000D,[IntPtr]$inputText2.Capacity,$inputText2)
+  Write-Host "TEST $($case.id) INPUT1=($($inputText1.ToString())) INPUT2=($($inputText2.ToString()))"
   Snapshot "$($case.id)-before"
   $button=[NativeWin]::GetDlgItem($w,$case.button)
   if($button -eq [IntPtr]::Zero){ throw "Operation button missing: $($case.button)" }
@@ -115,21 +116,37 @@ try {
   Start-Sleep -Milliseconds 450
   $after1=New-Object System.Text.StringBuilder 500
   $after2=New-Object System.Text.StringBuilder 500
-  [void][NativeWin]::GetWindowText($one,$after1,$after1.Capacity)
-  [void][NativeWin]::GetWindowText($two,$after2,$after2.Capacity)
+  [void][NativeWin]::ReadText($one,0x000D,[IntPtr]$after1.Capacity,$after1)
+  [void][NativeWin]::ReadText($two,0x000D,[IntPtr]$after2.Capacity,$after2)
   Write-Host "AFTER INPUT1=($($after1.ToString())) INPUT2=($($after2.ToString()))"
   Snapshot $case.id
   $text=ResultAndStatus
   Write-Host "OBSERVED=$text EXPECTED=$($case.expected)"
-  $match=$text.Contains($case.expected)
+  $expectedError=$case.id -in @('05-zero-divisor','06-invalid-input','11-empty','13-out-of-range')
+  $observedResult=ControlText 303
+  $observedStatus=ControlText 304
+  $inputsMatch=((ControlText 301) -ceq $case.first) -and ((ControlText 302) -ceq $case.second)
+  if($expectedError){
+    $match=($observedResult -ceq '') -and $observedStatus.StartsWith($case.expected)
+  } else {
+    $match=($observedResult -ceq $case.expected)
+  }
+  $match=$match -and $inputsMatch
   $results += [PSCustomObject]@{Case=$case.id;Input1=$case.first;Input2=$case.second;Expected=$case.expected;Observed=$text;Pass=$match}
  }
+ [void][NativeWin]::PostMessage($w,273,[IntPtr]105,[IntPtr]::Zero)
+ Start-Sleep -Milliseconds 250
+ Snapshot "14-clear"
+ $clearOK=((ControlText 301) -ceq '') -and ((ControlText 302) -ceq '') -and ((ControlText 303) -ceq '') -and ((ControlText 304) -ceq 'Ready. Enter two whole numbers.')
+ $results += [PSCustomObject]@{Case='14-clear';Input1='';Input2='';Expected='Empty inputs/result; Ready. Enter two whole numbers.';Observed=(ResultAndStatus);Pass=$clearOK}
+ [void][NativeWin]::PostMessage($w,273,[IntPtr]106,[IntPtr]::Zero)
+ $exitOK=$proc.WaitForExit(5000)
+ if($exitOK){$exitOK=$proc.ExitCode -eq 0}
+ $results += [PSCustomObject]@{Case='15-exit';Input1='';Input2='';Expected='Process exits with code 0';Observed="Exited=$exitOK";Pass=$exitOK}
  $results | Export-Csv -NoTypeInformation -Path (Join-Path $evidence "verified_test_results.csv")
  if(($results | Where-Object {-not $_.Pass}).Count -gt 0){throw "Calculator returned incorrect values in one or more GUI tests"}
- [void][NativeWin]::SendMessage($w,273,[IntPtr]105,[IntPtr]::Zero)
- Start-Sleep -Milliseconds 250
- Snapshot "07-clear"
- Write-Host "SUCCESS: GUI launched and tests passed"
+ Write-Host "SUCCESS: GUI launched and all 15 tests passed"
+
 } finally {
  if(-not $proc.HasExited){$proc.CloseMainWindow() | Out-Null;Start-Sleep -Milliseconds 500}
  if(-not $proc.HasExited){Stop-Process -Id $proc.Id -Force}

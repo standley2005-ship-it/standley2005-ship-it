@@ -3,9 +3,16 @@ on:
   push:
     branches:
       - csdp260-project2-build
+      - csdp260-project2-submission
     paths:
       - '.github/workflows/csdp260-project2-build.yml'
       - 'csdp260-project2/**'
+  workflow_dispatch:
+  pull_request:
+    branches: [csdp260-project2-build]
+    paths: ['csdp260-project2/**', '.github/workflows/csdp260-project2-build.yml']
+permissions:
+  contents: read
 jobs:
   verify-windows-app:
     runs-on: windows-latest
@@ -38,7 +45,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "NASM arithmetic verification failed" }
       - name: Launch real calculator, run GUI tests and capture evidence
         shell: pwsh
-        continue-on-error: true
         run: |
           & ./csdp260-project2/windows_test.ps1
       - name: Upload Windows executable and genuine test evidence
@@ -52,3 +58,38 @@ jobs:
             csdp260-project2/evidence/*.png
             csdp260-project2/evidence/*.csv
           if-no-files-found: warn
+      - name: Stage verified submission and create final ZIP
+        shell: pwsh
+        run: |
+          $root = "submission/csdp260-project2"
+          New-Item -ItemType Directory -Force "$root/build", "$root/screenshots", "$root/evidence" | Out-Null
+          foreach ($item in @('src','documentation','video','.vscode','README.txt','START_HERE_LIVE_DEMO.txt','build.bat','windows_test.ps1','test_routines.c')) {
+            Copy-Item "csdp260-project2/$item" $root -Recurse
+          }
+          Copy-Item csdp260-project2/build/Calculator.exe "$root/build/"
+          Copy-Item csdp260-project2/evidence/*.png "$root/screenshots/"
+          Copy-Item csdp260-project2/evidence/*.csv "$root/evidence/"
+          @(
+            "Commit: $env:GITHUB_SHA",
+            "Run: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID",
+            "Runner: $env:RUNNER_OS $env:RUNNER_ARCH",
+            "Build and both test steps passed before packaging.",
+            "User-supplied MP4 included unchanged; see video/README.txt",
+            "Original coursework documentation/rubric: see documentation/MISSING_ITEMS.txt"
+          ) | Set-Content "$root/evidence/BUILD_PROVENANCE.txt"
+          $arithmetic = @(Import-Csv "$root/evidence/assembly_arithmetic_verified.csv")
+          $gui = @(Import-Csv "$root/evidence/verified_test_results.csv")
+          if ($arithmetic.Count -ne 13 -or @($arithmetic | Where-Object Pass -ne 'PASS').Count -gt 0) { throw 'Arithmetic evidence incomplete' }
+          if ($gui.Count -ne 15 -or @($gui | Where-Object Pass -ne 'True').Count -gt 0) { throw 'GUI evidence incomplete' }
+          Get-FileHash "$root/build/Calculator.exe" -Algorithm SHA256 | Format-List | Out-String | Set-Content "$root/evidence/EXECUTABLE_SHA256.txt"
+          $video = "$root/video/Standley_Saint_Leger_Rock_CSDP260_Project2_Verified_Narrated_Demonstration.mp4"
+          if ((Get-FileHash $video -Algorithm SHA256).Hash -ne 'be960ea2dd9399c9c5aa1fd1f25e2e98bd433b355922ef2b1b88c913bb62d366') { throw 'Supplied video integrity check failed' }
+          Compress-Archive -Path $root -DestinationPath Standley_Saint_Leger_Rock_CSDP260_Project2_FINAL.zip
+          Add-Content $env:GITHUB_STEP_SUMMARY "Windows build passed; 13 independent arithmetic and 15 GUI cases passed. FINAL ZIP contains genuine captures and evidence. User-supplied MP4 included unchanged. Original coursework documentation/rubric remains unavailable; see MISSING_ITEMS.txt."
+      - name: Download final submission ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Standley_Saint_Leger_Rock_CSDP260_Project2_FINAL
+          path: Standley_Saint_Leger_Rock_CSDP260_Project2_FINAL.zip
+          if-no-files-found: error
+          retention-days: 90

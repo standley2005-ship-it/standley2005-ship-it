@@ -1,0 +1,31 @@
+LIVE WINDOWS DEMO - Standley Saint Leger Rock - CSDP 260 Project 2
+
+1. Open the linked successful GitHub Actions run, sign in, and download the
+   Standley_Saint_Leger_Rock_CSDP260_Project2_FINAL artifact.
+2. Transfer to the Windows x64 demo computer. Right-click the downloaded ZIP,
+   choose Extract All. If it contains the FINAL.zip, extract that ZIP too.
+   Open the extracted csdp260-project2 folder.
+3. Double-click build\Calculator.exe. No rebuild is needed.
+4. Click Clear before EACH case. Type into the two number fields; click the
+   corresponding operation button. Read the result or status aloud:
+      10 and 5   Add       15
+      20 and 8   Subtract  12
+       6 and 4   Multiply  24
+      15 and 2   Divide    7.5
+      10 and 0   Divide    Cannot divide by zero.
+     abc and 3   Add       Invalid input.
+5. Click Clear: both input boxes and result become empty, status is Ready.
+6. Open src\arithmetic.asm in VS Code or Notepad. Show calc_add,
+   calc_subtract, calc_multiply, and calc_divide. Explain RCX/RDX operands,
+   RAX result, and division scaled by 10000 for four decimal places.
+7. Return to Calculator and click Exit to close it.
+8. Optional rebuild: install NASM and Visual Studio C++ Build Tools + Windows
+   SDK. Open an x64 Native Tools Command Prompt for VS. cd to the extracted
+   project folder and run build.bat. Run build\Calculator.exe again.
+   To use the VS Code task, launch `code .` from that prompt; Ctrl+Shift+B.
+
+Rehearse on the actual classroom Windows computer beforehand. CI validates
+Windows execution, but classroom display, permissions and security prompts
+still need an in-person check. Do not disable Windows security protections.
+Your supplied demonstration MP4 is included; see video/README.txt.
+Check documentation/MISSING_ITEMS.txt for remaining coursework gaps.
