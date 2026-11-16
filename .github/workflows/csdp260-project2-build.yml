@@ -27,6 +27,15 @@ jobs:
           cmd /c ('call "'+$vcvars+'" && cd csdp260-project2 && call build.bat')
           if ($LASTEXITCODE -ne 0) { throw "NASM/link.exe build failed" }
           if (-not (Test-Path "csdp260-project2/build/Calculator.exe")) { throw "Calculator.exe missing" }
+      - name: Independently verify NASM arithmetic procedures on Windows
+        shell: pwsh
+        run: |
+          $vswhere = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars64.bat"
+          New-Item -ItemType Directory -Force "csdp260-project2/evidence" | Out-Null
+          cmd /c ('call "'+$vcvars+'" && cd csdp260-project2 && cl /nologo /W4 /O2 /Fe:build\arithmetic_test.exe test_routines.c build\arithmetic.obj && build\arithmetic_test.exe')
+          if ($LASTEXITCODE -ne 0) { throw "NASM arithmetic verification failed" }
       - name: Launch real calculator, run GUI tests and capture evidence
         shell: pwsh
         continue-on-error: true
@@ -39,6 +48,7 @@ jobs:
           name: CSDP260-Project2-Windows-Evidence
           path: |
             csdp260-project2/build/Calculator.exe
+            csdp260-project2/build/arithmetic_test.exe
             csdp260-project2/evidence/*.png
             csdp260-project2/evidence/*.csv
           if-no-files-found: warn
