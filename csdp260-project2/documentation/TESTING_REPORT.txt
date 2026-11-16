@@ -20,4 +20,5 @@ No local Linux execution of Calculator.exe is claimed. Automated WM_CHAR
 editing and button commands test the actual GUI but do not establish physical
 keyboard/mouse usability on the classroom PC. That remains a live rehearsal.
 A successful downloadable FINAL ZIP means all automated cases passed in that
-run. Missing video/original documentation remains a separate submission gap.
+run. The supplied MP4 is included unchanged (see video/README.txt). Original
+coursework documentation/rubric remains unavailable for compliance review.

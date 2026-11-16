@@ -24,5 +24,6 @@ harness, then types WM_CHAR input into the running app, clearing each case.
 The automation observes exact result controls, error status, Clear and Exit.
 It captures real window images. See evidence CSVs for actual observations.
 
-This documentation was prepared from repository source; no video, original
-student report or classroom demonstration is claimed. See MISSING_ITEMS.txt.
+This documentation was prepared from repository source. A user-supplied MP4
+is now included unchanged; see video/README.txt for checks and limits. No
+original student report or classroom demonstration is claimed. See MISSING_ITEMS.txt.

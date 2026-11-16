@@ -27,4 +27,5 @@ LIVE WINDOWS DEMO - Standley Saint Leger Rock - CSDP 260 Project 2
 Rehearse on the actual classroom Windows computer beforehand. CI validates
 Windows execution, but classroom display, permissions and security prompts
 still need an in-person check. Do not disable Windows security protections.
-Missing submission item: your actual narrated MP4; see video/README.txt.
+Your supplied demonstration MP4 is included; see video/README.txt.
+Check documentation/MISSING_ITEMS.txt for remaining coursework gaps.
