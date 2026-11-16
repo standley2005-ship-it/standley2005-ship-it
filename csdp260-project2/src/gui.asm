@@ -318,6 +318,13 @@ perform_calculation:
     mov r8d, 64                ; maximum including NUL
     lea r9, [buffer1]
     call SendMessageA
+    ; Diagnostic only: show the WM_GETTEXT character count returned.
+    mov rcx, rax
+    call format_int64
+    mov rdx, rax
+    mov rcx, [h_result]
+    call SetWindowTextA
+    jmp .finished
     lea rcx, [buffer1]
     call parse_int32
     test edx, edx
