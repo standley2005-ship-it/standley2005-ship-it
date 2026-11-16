@@ -320,10 +320,10 @@ perform_calculation:
     lea r8, [parse_ok]
     mov r9d, 1
     call GetDlgItemInt
-    ; Diagnostic: display first GetDlgItemInt return value in result
+    ; Diagnostic: display stored first control HWND in result
     movsxd rax, eax
     mov [operand1], rax
-    mov rcx, rax
+    mov rcx, [h_input1]
     call format_int64
     mov rcx, [h_result]
     mov rdx, rax
