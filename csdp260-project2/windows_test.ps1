@@ -80,7 +80,9 @@ try {
   [void][NativeWin]::GetWindowText($two,$inputText2,$inputText2.Capacity)
   Write-Host "TEST $($case.id) SET1=$was1 SET2=$was2 INPUT1=($($inputText1.ToString())) INPUT2=($($inputText2.ToString()))"
   Snapshot "$($case.id)-before"
-  [void][NativeWin]::SendMessage($w,273,[IntPtr]$case.button,[IntPtr]::Zero)
+  $button=[NativeWin]::GetDlgItem($w,$case.button)
+  if($button -eq [IntPtr]::Zero){ throw "Operation button missing: $($case.button)" }
+  [void][NativeWin]::SendMessage($button,245,[IntPtr]::Zero,[IntPtr]::Zero)
   Start-Sleep -Milliseconds 450
   $after1=New-Object System.Text.StringBuilder 500
   $after2=New-Object System.Text.StringBuilder 500
