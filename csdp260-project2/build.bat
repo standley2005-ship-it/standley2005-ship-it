@@ -17,8 +17,7 @@ nasm -f win64 "src\main.asm" -o "build\main.obj" || exit /b 1
 nasm -f win64 "src\gui.asm" -o "build\gui.obj" || exit /b 1
 nasm -f win64 "src\arithmetic.asm" -o "build\arithmetic.obj" || exit /b 1
 nasm -f win64 "src\validation.asm" -o "build\validation.obj" || exit /b 1
-cl /nologo /O2 /W4 /c /Fo:"build\win32_bridge.obj" "src\win32_bridge.c" || exit /b 1
-link /NOLOGO /MACHINE:X64 /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup /OUT:"build\Calculator.exe" "build\main.obj" "build\gui.obj" "build\arithmetic.obj" "build\validation.obj" "build\win32_bridge.obj" user32.lib kernel32.lib || exit /b 1
+link /NOLOGO /MACHINE:X64 /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup /OUT:"build\Calculator.exe" "build\main.obj" "build\gui.obj" "build\arithmetic.obj" "build\validation.obj" user32.lib kernel32.lib || exit /b 1
 echo.
 echo BUILD OK: build\Calculator.exe
 echo Run with: build\Calculator.exe
