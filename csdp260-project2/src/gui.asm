@@ -312,6 +312,15 @@ perform_calculation:
     mov ebx, ecx
     mov [caller_hwnd], rdx
 
+    ; Diagnostic: ask Win32 for edit1 text and echo it in the result label
+    mov rcx, [h_input1]
+    lea rdx, [buffer1]
+    mov r8d, 64
+    call GetWindowTextA
+    mov rcx, [h_result]
+    lea rdx, [buffer1]
+    call SetWindowTextA
+
     ; Read signed integers through Win32; arithmetic remains NASM.
     mov rcx, [h_input1]
     call GetParent
@@ -320,16 +329,10 @@ perform_calculation:
     lea r8, [parse_ok]
     mov r9d, 1
     call GetDlgItemInt
-    ; Diagnostic: display incoming parent HWND in result
-    movsxd rax, eax
-    mov [operand1], rax
-    mov rcx, [caller_hwnd]
-    call format_int64
-    mov rcx, [h_result]
-    mov rdx, rax
-    call SetWindowTextA
     cmp dword [parse_ok], 0
     je .parse_input_error
+    movsxd rax, eax
+    mov [operand1], rax
 
     mov rcx, [h_input2]
     call GetParent
