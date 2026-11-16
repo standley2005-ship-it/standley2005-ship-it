@@ -13,6 +13,7 @@ public static class NativeWin {
  [DllImport("user32.dll")] public static extern uint GetDlgItemInt(IntPtr h,int id,out bool ok,bool signed);
  [DllImport("user32.dll",CharSet=CharSet.Ansi)] public static extern bool SetWindowText(IntPtr h,string t);
  [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr h,int m,IntPtr w,IntPtr l);
+ [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h,uint m,IntPtr w,IntPtr l);
  [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h,IntPtr hdc,uint flags);
  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h,out RECT rect);
  [DllImport("user32.dll",CharSet=CharSet.Ansi)] public static extern int GetWindowText(IntPtr h,StringBuilder t,int max);
@@ -89,7 +90,9 @@ try {
   Snapshot "$($case.id)-before"
   $button=[NativeWin]::GetDlgItem($w,$case.button)
   if($button -eq [IntPtr]::Zero){ throw "Operation button missing: $($case.button)" }
-  [void][NativeWin]::SendMessage($button,245,[IntPtr]::Zero,[IntPtr]::Zero)
+  # Queue normal WM_COMMAND for the GUI thread instead of nested cross-process SendMessage
+  $posted=[NativeWin]::PostMessage($w,273,[IntPtr]$case.button,$button)
+  if(-not $posted){ throw "PostMessage failed for $($case.id)" }
   Start-Sleep -Milliseconds 450
   $after1=New-Object System.Text.StringBuilder 500
   $after2=New-Object System.Text.StringBuilder 500
