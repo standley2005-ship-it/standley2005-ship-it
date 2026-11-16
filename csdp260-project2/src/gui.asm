@@ -8,7 +8,7 @@ extern GetModuleHandleA, LoadCursorA, RegisterClassExA
 extern CreateWindowExA, ShowWindow, UpdateWindow
 extern GetMessageA, TranslateMessage, DispatchMessageA
 extern DefWindowProcA, PostQuitMessage, DestroyWindow
-extern GetWindowTextA, SetWindowTextA, SendMessageA
+extern GetWindowTextA, SetWindowTextA, SendMessageA, win32_read_edit
 extern parse_int32, format_int64, format_fixed4
 extern calc_add, calc_subtract, calc_multiply, calc_divide
 
@@ -314,10 +314,9 @@ perform_calculation:
 
     ; Explicitly request text through WM_GETTEXT from each EDIT control.
     mov rcx, [h_input1]
-    mov edx, 13                 ; WM_GETTEXT
-    mov r8d, 64                ; maximum including NUL
-    lea r9, [buffer1]
-    call SendMessageA
+    lea rdx, [buffer1]
+    mov r8d, 64
+    call win32_read_edit
     lea rcx, [buffer1]
     call parse_int32
     test edx, edx
@@ -325,10 +324,9 @@ perform_calculation:
     mov [operand1], rax
 
     mov rcx, [h_input2]
-    mov edx, 13
+    lea rdx, [buffer2]
     mov r8d, 64
-    lea r9, [buffer2]
-    call SendMessageA
+    call win32_read_edit
     lea rcx, [buffer2]
     call parse_int32
     test edx, edx
