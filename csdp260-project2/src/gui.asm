@@ -8,7 +8,7 @@ extern GetModuleHandleA, LoadCursorA, RegisterClassExA
 extern CreateWindowExA, ShowWindow, UpdateWindow
 extern GetMessageA, TranslateMessage, DispatchMessageA
 extern DefWindowProcA, PostQuitMessage, DestroyWindow
-extern GetWindowTextA, SetWindowTextA, GetDlgItem, GetDlgItemTextA, GetDlgItemInt, GetParent, GetLastError, SetLastError
+extern GetWindowTextA, SetWindowTextA, SendMessageA
 extern parse_int32, format_int64, format_fixed4
 extern calc_add, calc_subtract, calc_multiply, calc_divide
 
@@ -312,43 +312,27 @@ perform_calculation:
     mov ebx, ecx
     mov [caller_hwnd], rdx
 
-    ; Diagnostic: get Win32 error code after retrieving edit text
-    xor ecx, ecx
-    call SetLastError
+    ; Explicitly request text through WM_GETTEXT from each EDIT control.
     mov rcx, [h_input1]
-    lea rdx, [buffer1]
-    mov r8d, 64
-    call GetWindowTextA
-    call GetLastError
-    mov rcx, rax
-    call format_int64
-    mov rcx, [h_result]
-    mov rdx, rax
-    call SetWindowTextA
-
-    ; Read signed integers through Win32; arithmetic remains NASM.
-    mov rcx, [h_input1]
-    call GetParent
-    mov rcx, rax
-    mov edx, 301
-    lea r8, [parse_ok]
-    mov r9d, 1
-    call GetDlgItemInt
-    cmp dword [parse_ok], 0
-    je .parse_input_error
-    movsxd rax, eax
+    mov edx, 13                 ; WM_GETTEXT
+    mov r8d, 64                ; maximum including NUL
+    lea r9, [buffer1]
+    call SendMessageA
+    lea rcx, [buffer1]
+    call parse_int32
+    test edx, edx
+    jnz .parse_error
     mov [operand1], rax
 
     mov rcx, [h_input2]
-    call GetParent
-    mov rcx, rax
-    mov edx, 302
-    lea r8, [parse_ok]
-    mov r9d, 1
-    call GetDlgItemInt
-    cmp dword [parse_ok], 0
-    je .parse_input_error
-    movsxd rax, eax
+    mov edx, 13
+    mov r8d, 64
+    lea r9, [buffer2]
+    call SendMessageA
+    lea rcx, [buffer2]
+    call parse_int32
+    test edx, edx
+    jnz .parse_error
     mov [operand2], rax
 
     mov rcx, [operand1]
@@ -387,10 +371,8 @@ perform_calculation:
     call SetWindowTextA
     jmp .finished
 .parse_input_error:
-    ; Diagnostic: keep result showing first parsed value
-    mov rcx, [h_status]
-    lea rdx, [err_invalid]
-    call SetWindowTextA
+    lea rcx, [err_invalid]
+    call show_error
     jmp .finished
 .parse_error:
     mov ecx, edx
