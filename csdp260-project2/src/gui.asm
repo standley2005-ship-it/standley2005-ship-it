@@ -8,7 +8,7 @@ extern GetModuleHandleA, LoadCursorA, RegisterClassExA
 extern CreateWindowExA, ShowWindow, UpdateWindow
 extern GetMessageA, TranslateMessage, DispatchMessageA
 extern DefWindowProcA, PostQuitMessage, DestroyWindow
-extern GetWindowTextA, SetWindowTextA, SendMessageA, win32_read_edit
+extern GetWindowTextA, SetWindowTextA
 extern parse_int32, format_int64, format_fixed4
 extern calc_add, calc_subtract, calc_multiply, calc_divide
 
@@ -116,8 +116,6 @@ section .bss
     h_result resq 1
     h_status resq 1
     dummy_handle resq 1
-    caller_hwnd resq 1
-    parse_ok resd 1
     buffer1 resb 64
     buffer2 resb 64
     operand1 resq 1
@@ -285,7 +283,6 @@ window_proc:
     jmp .handled
 .calculate:
     mov ecx, eax
-    mov rdx, rbx                 ; direct parent HWND from WndProc
     call perform_calculation
     jmp .handled
 .clear:
@@ -310,13 +307,11 @@ perform_calculation:
     push rbx
     sub rsp, 32
     mov ebx, ecx
-    mov [caller_hwnd], rdx
 
-    ; Explicitly request text through WM_GETTEXT from each EDIT control.
     mov rcx, [h_input1]
     lea rdx, [buffer1]
     mov r8d, 64
-    call win32_read_edit
+    call GetWindowTextA
     lea rcx, [buffer1]
     call parse_int32
     test edx, edx
@@ -326,7 +321,7 @@ perform_calculation:
     mov rcx, [h_input2]
     lea rdx, [buffer2]
     mov r8d, 64
-    call win32_read_edit
+    call GetWindowTextA
     lea rcx, [buffer2]
     call parse_int32
     test edx, edx
@@ -367,10 +362,6 @@ perform_calculation:
     mov rcx, [h_status]
     lea rdx, [txt_done]
     call SetWindowTextA
-    jmp .finished
-.parse_input_error:
-    lea rcx, [err_invalid]
-    call show_error
     jmp .finished
 .parse_error:
     mov ecx, edx
