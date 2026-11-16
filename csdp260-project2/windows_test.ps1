@@ -10,6 +10,7 @@ using System.Text;
 public static class NativeWin {
  [DllImport("user32.dll",CharSet=CharSet.Ansi)] public static extern IntPtr FindWindow(string c,string n);
  [DllImport("user32.dll")] public static extern IntPtr GetDlgItem(IntPtr h,int id);
+ [DllImport("user32.dll")] public static extern uint GetDlgItemInt(IntPtr h,int id,out bool ok,bool signed);
  [DllImport("user32.dll",CharSet=CharSet.Ansi)] public static extern bool SetWindowText(IntPtr h,string t);
  [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr h,int m,IntPtr w,IntPtr l);
  [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h,IntPtr hdc,uint flags);
@@ -79,6 +80,11 @@ try {
   [void][NativeWin]::GetWindowText($one,$inputText1,$inputText1.Capacity)
   [void][NativeWin]::GetWindowText($two,$inputText2,$inputText2.Capacity)
   Write-Host "TEST $($case.id) SET1=$was1 SET2=$was2 INPUT1=($($inputText1.ToString())) INPUT2=($($inputText2.ToString()))"
+  $ok1=$false
+  $ok2=$false
+  $val1=[NativeWin]::GetDlgItemInt($w,301,[ref]$ok1,$true)
+  $val2=[NativeWin]::GetDlgItemInt($w,302,[ref]$ok2,$true)
+  Write-Host "API GetDlgItemInt: $val1 ok=$ok1; $val2 ok=$ok2"
   Snapshot "$($case.id)-before"
   $button=[NativeWin]::GetDlgItem($w,$case.button)
   if($button -eq [IntPtr]::Zero){ throw "Operation button missing: $($case.button)" }
